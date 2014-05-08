@@ -1,0 +1,185 @@
+
+
+#include 	"setup.h"
+#include 	"config.h"
+#include 	"cdate.h"
+
+#include 	"delayt.h"
+
+#include 	"compiler.h"
+#include 	"motor.h"
+#include 	"swuart.h"
+#include 	"uart.h"
+#include 	"gps.h"
+#include 	"debug.h"
+
+	/* configuration word*/
+		#pragma config CPUDIV 	= OSC1
+		#pragma config PLLDIV 	= 5
+	
+		#pragma config 	WDTEN 	= ON
+		#pragma config 	STVREN 	= ON
+		#pragma config 	FOSC 	= HSPLL
+		#pragma config 	WDTPS 	= 32768
+		#pragma config 	XINST 	= OFF
+		#pragma config 	CP0 	= OFF
+		//#pragma config 	DEBUG 	= OFF
+		#pragma config 	CCP2MX 	= DEFAULT
+		#pragma config 	MSSPMSK = MSK7
+
+
+extern char buffer[520];
+
+UINT16 msec;
+
+CTime timeTime;
+static unsigned int sec_timer;
+
+
+extern _SW_UART_STATUS_t sw_uart_status; 
+
+
+int main(void) {
+  unsigned char step;  
+
+  	setup_hardware();
+	swuart_init();
+    
+
+   
+        while (1) {
+	        	    LED1_GREEN=!LED1_GREEN;
+	    			__delayMs(500);
+					DEBUG("setup"); 
+}
+
+
+//  
+//	__delayMs(2000);
+//
+//	SetupGPS();
+//
+//	MotorCenter();
+//	sec_timer=1000;
+////	stepLeft();
+////	stepRight();
+	
+	step=0;
+
+    while (1) {
+DEBUG("setup"); 
+	    LED1_GREEN=!LED1_GREEN;
+	    __delayMs(500);
+	 // while(!PORTAbits.RA4) CLRWDT();
+	 //   {
+	//	    if(smer==1)
+	//			step= ++step %4;	
+	//		else 
+	//			step= --step %4;	
+	//						
+	//		MotorStep(step);	
+	//	}
+	//while(!POS2 &&!POS1) LED1_GREEN=1;//er==1) smer=2; else smer=1;}
+	//LED1_GREEN=0;
+	//	while(PORTAbits.RA4) CLRWDT();
+	
+
+
+    }//while(1)
+
+}/*main()*/
+
+
+/*!
+ *	Interrupts service
+ */
+
+//static void interrupt isr_high(void)
+//{
+//    /*u seconds delay */
+//    if (INTCONbits.TMR0IF && INTCONbits.TMR0IE) {        
+//        TMR0L = 0xff; /* ~10 usec */
+//        INTCONbits.TMR0IF = 0;	
+//        //DELAY_MACRO_USEC;
+//    }
+//
+//    /*m seconds delay */
+//    if (PIR1bits.TMR1IF && PIE1bits.TMR1IE) {
+//        PIR1bits.TMR1IF = 0;
+//        TMR1H = 0xfd;
+//        TMR1L = 0xa8;
+//
+//        if(--sec_timer == 0)
+//        {
+//	        tickTime(&timeTime);
+//	        sec_timer=1000;
+//        }
+//        /*software timer for delay routine*/
+//        timer0_service();
+//        /*delay macro*/
+//       DELAY_MACRO_MSEC;
+//    }
+//}
+
+/**************************************************************************************/
+/** VECTOR REMAPPING ******************************************************************/
+/**************************************************************************************/
+	
+	static void interrupt isr_high(void)
+	{
+	 /*u seconds delay */
+	    if (INTCONbits.TMR0IF && INTCONbits.TMR0IE) 
+		{
+	        TMR0H = 0xff;
+	        TMR0L = -40; /* ~10 usec */
+	        INTCONbits.TMR0IF = 0;
+	        DELAY_MACRO_USEC;
+	    }
+
+    	/*m seconds delay */
+  	  	if (PIR1bits.TMR1IF && PIE1bits.TMR1IE) 
+	    {
+	        PIR1bits.TMR1IF = 0;
+	        TMR1H = 0xfd;
+	        TMR1L = 0xa8;
+	      
+	        if (msec) msec--; //count jobwn timer if timer >0
+	       	                     
+		        if (!msec) {
+
+	           
+	            
+//				if(RTCC.MIN == 59){
+//					if(RTCC.HOUR == 23){
+//						char days_in_month ;
+//						if(RTCC.YEAR &3) days_in_month = MonthDays[RTCC.MON];
+//						else if(RTCC.MON==2)//vysokostnyi
+//								days_in_month =MonthDays[2]+1;
+//						if(RTCC.DAY == days_in_month ){
+//							RTCC.YEAR++;
+//							RTCC.DAY=0;
+//						}
+//						else RTCC.DAY++;							
+//						RTCC.HOUR = 0;
+//					}
+//					else RTCC.HOUR++;	
+//					RTCC.MIN =0;
+//				}
+//				else RTCC.MIN++;
+				
+	            msec = 60000;
+	        }// if (!msec)
+	        /*delay macro*/
+	        DELAY_MACRO_MSEC;
+	    }//if (PIR1bits.TMR1IF && PIE1bits.TMR1IE)
+	    
+	    //For Software uart debug purposes
+	     if (PIR2bits.TMR3IF ) 
+		     {
+			     PIR2bits.TMR3IF=0;
+			     TMR3H = 0xf7;
+			     TMR3L = 0xdb;
+			      SW_UART_SYNC;
+		    } 
+	}//void YourHighPriorityISRCode(void)
+	
